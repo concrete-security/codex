@@ -66,6 +66,7 @@ struct StatusHistoryCell {
     session_id: Option<String>,
     token_usage: StatusTokenUsageData,
     rate_limits: StatusRateLimitData,
+    is_confidential: bool,
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -150,6 +151,8 @@ impl StatusHistoryCell {
         };
         let rate_limits = compose_rate_limit_data(rate_limits, now);
 
+        let is_confidential = config.model_provider.use_ratls.unwrap_or(false);
+
         Self {
             model_name,
             model_details,
@@ -161,6 +164,7 @@ impl StatusHistoryCell {
             session_id,
             token_usage,
             rate_limits,
+            is_confidential,
         }
     }
 
@@ -331,11 +335,12 @@ impl HistoryCell for StatusHistoryCell {
             }
         });
 
-        let mut labels: Vec<String> =
-            vec!["Model", "Directory", "Approval", "Sandbox", "Agents.md"]
-                .into_iter()
-                .map(str::to_string)
-                .collect();
+        let mut base_labels = vec!["Model"];
+        if self.is_confidential {
+            base_labels.push("Security");
+        }
+        base_labels.extend(["Directory", "Approval", "Sandbox", "Agents.md"]);
+        let mut labels: Vec<String> = base_labels.into_iter().map(str::to_string).collect();
         let mut seen: BTreeSet<String> = labels.iter().cloned().collect();
 
         if account_value.is_some() {
@@ -380,6 +385,12 @@ impl HistoryCell for StatusHistoryCell {
         let directory_value = format_directory_display(&self.directory, Some(value_width));
 
         lines.push(formatter.line("Model", model_spans));
+        if self.is_confidential {
+            lines.push(formatter.line(
+                "Security",
+                vec![Span::from("Confidential (Attested TEE)").green()],
+            ));
+        }
         lines.push(formatter.line("Directory", vec![Span::from(directory_value)]));
         lines.push(formatter.line("Approval", vec![Span::from(self.approval.clone())]));
         lines.push(formatter.line("Sandbox", vec![Span::from(self.sandbox.clone())]));
