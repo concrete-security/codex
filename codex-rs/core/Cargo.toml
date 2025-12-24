@@ -90,9 +90,14 @@ uuid = { workspace = true, features = ["serde", "v4", "v5"] }
 which = { workspace = true }
 wildmatch = { workspace = true }
 
+# Optional dependencies for ratls feature
+ratls-core = { workspace = true, optional = true }
+hex = { version = "0.4", optional = true }
+
 [features]
 deterministic_process_ids = []
 test-support = []
+ratls = ["dep:ratls-core", "dep:hex", "codex-client/ratls"]
 
 
 [target.'cfg(target_os = "linux")'.dependencies]

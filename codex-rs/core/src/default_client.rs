@@ -151,6 +151,37 @@ pub fn build_reqwest_client() -> reqwest::Client {
     builder.build().unwrap_or_else(|_| reqwest::Client::new())
 }
 
+/// Create an HTTP transport for the given provider.
+///
+/// If the provider has `use_ratls = true`, returns an `RatlsTransport` that
+/// establishes attested TLS connections to TEEs. Otherwise, returns a
+/// standard `ReqwestTransport`.
+#[cfg(feature = "ratls")]
+pub fn build_transport_for_provider(
+    provider: &crate::model_provider_info::ModelProviderInfo,
+) -> Box<dyn codex_client::HttpTransport> {
+    if provider.use_ratls.unwrap_or(false) {
+        let policy = provider
+            .ratls_policy
+            .as_ref()
+            .map(crate::ratls_policy::to_ratls_policy)
+            .unwrap_or_default();
+        Box::new(codex_client::RatlsTransport::new(policy))
+    } else {
+        Box::new(codex_client::ReqwestTransport::new(build_reqwest_client()))
+    }
+}
+
+/// Create an HTTP transport for the given provider.
+///
+/// Without the `ratls` feature, always returns a `ReqwestTransport`.
+#[cfg(not(feature = "ratls"))]
+pub fn build_transport_for_provider(
+    _provider: &crate::model_provider_info::ModelProviderInfo,
+) -> Box<dyn codex_client::HttpTransport> {
+    Box::new(codex_client::ReqwestTransport::new(build_reqwest_client()))
+}
+
 fn is_sandboxed() -> bool {
     std::env::var(CODEX_SANDBOX_ENV_VAR).as_deref() == Ok("seatbelt")
 }

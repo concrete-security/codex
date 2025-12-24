@@ -105,6 +105,7 @@ core_test_support = { path = "core/tests/common" }
 exec_server_test_support = { path = "exec-server/tests/common" }
 mcp-types = { path = "mcp-types" }
 mcp_test_support = { path = "mcp-server/tests/common" }
+ratls-core = { path = "../ratls/core" }
 
 # External
 allocative = "0.3.3"

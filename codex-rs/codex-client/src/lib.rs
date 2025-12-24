@@ -6,6 +6,9 @@ mod sse;
 mod telemetry;
 mod transport;
 
+#[cfg(feature = "ratls")]
+mod ratls_transport;
+
 pub use crate::default_client::CodexHttpClient;
 pub use crate::default_client::CodexRequestBuilder;
 pub use crate::error::StreamError;
@@ -22,3 +25,6 @@ pub use crate::transport::ByteStream;
 pub use crate::transport::HttpTransport;
 pub use crate::transport::ReqwestTransport;
 pub use crate::transport::StreamResponse;
+
+#[cfg(feature = "ratls")]
+pub use crate::ratls_transport::RatlsTransport;

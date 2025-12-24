@@ -15,6 +15,10 @@ path = "src/lib.rs"
 [lints]
 workspace = true
 
+[features]
+default = []
+ratls = ["codex-core/ratls"]
+
 [dependencies]
 anyhow = { workspace = true }
 clap = { workspace = true, features = ["derive"] }

@@ -28,6 +28,19 @@ pub trait HttpTransport: Send + Sync {
     async fn stream(&self, req: Request) -> Result<StreamResponse, TransportError>;
 }
 
+/// Blanket implementation allowing `Box<dyn HttpTransport>` to be used
+/// where `T: HttpTransport` is required.
+#[async_trait]
+impl HttpTransport for Box<dyn HttpTransport> {
+    async fn execute(&self, req: Request) -> Result<Response, TransportError> {
+        (**self).execute(req).await
+    }
+
+    async fn stream(&self, req: Request) -> Result<StreamResponse, TransportError> {
+        (**self).stream(req).await
+    }
+}
+
 #[derive(Clone, Debug)]
 pub struct ReqwestTransport {
     client: CodexHttpClient,

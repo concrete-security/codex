@@ -47,6 +47,35 @@ pub enum WireApi {
     Chat,
 }
 
+/// Configuration for minimum TDX TCB requirements (hex-encoded values).
+#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq)]
+pub struct TdxTcbPolicyConfig {
+    /// Expected MRSEAM value (hex-encoded).
+    pub mrseam: Option<String>,
+    /// Expected MRTMR values (hex-encoded).
+    pub mrtmrs: Option<String>,
+}
+
+/// RA-TLS attestation policy configuration.
+#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq)]
+pub struct RatlsPolicy {
+    /// TEE type: "Tdx" (default). Future: "Snp".
+    #[serde(default)]
+    pub tee_type: Option<String>,
+
+    /// Acceptable TDX TCB status values (e.g., ["UpToDate", "SWHardeningNeeded"]).
+    #[serde(default)]
+    pub allowed_tdx_status: Option<Vec<String>>,
+
+    /// Minimum TCB requirements.
+    #[serde(default)]
+    pub min_tdx_tcb: Option<TdxTcbPolicyConfig>,
+
+    /// PCCS URL for collateral fetching (defaults to Phala Network).
+    #[serde(default)]
+    pub pccs_url: Option<String>,
+}
+
 /// Serializable representation of a provider definition.
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
 pub struct ModelProviderInfo {
@@ -99,6 +128,16 @@ pub struct ModelProviderInfo {
     /// and API key (if needed) comes from the "env_key" environment variable.
     #[serde(default)]
     pub requires_openai_auth: bool,
+
+    /// Enable RA-TLS (Remote Attestation TLS) for this provider. When true, connections
+    /// will use attested TLS to verify the server is running in a trusted execution
+    /// environment (TEE).
+    #[serde(default)]
+    pub use_ratls: Option<bool>,
+
+    /// RA-TLS attestation policy configuration. Only used when `use_ratls` is true.
+    #[serde(default)]
+    pub ratls_policy: Option<RatlsPolicy>,
 }
 
 impl ModelProviderInfo {
@@ -247,6 +286,8 @@ impl ModelProviderInfo {
             stream_max_retries: None,
             stream_idle_timeout_ms: None,
             requires_openai_auth: true,
+            use_ratls: None,
+            ratls_policy: None,
         }
     }
 
@@ -320,6 +361,8 @@ pub fn create_oss_provider_with_base_url(base_url: &str, wire_api: WireApi) -> M
         stream_max_retries: None,
         stream_idle_timeout_ms: None,
         requires_openai_auth: false,
+        use_ratls: None,
+        ratls_policy: None,
     }
 }
 
@@ -348,6 +391,8 @@ base_url = "http://localhost:11434/v1"
             stream_max_retries: None,
             stream_idle_timeout_ms: None,
             requires_openai_auth: false,
+            use_ratls: None,
+            ratls_policy: None,
         };
 
         let provider: ModelProviderInfo = toml::from_str(azure_provider_toml).unwrap();
@@ -378,6 +423,8 @@ query_params = { api-version = "2025-04-01-preview" }
             stream_max_retries: None,
             stream_idle_timeout_ms: None,
             requires_openai_auth: false,
+            use_ratls: None,
+            ratls_policy: None,
         };
 
         let provider: ModelProviderInfo = toml::from_str(azure_provider_toml).unwrap();
@@ -411,6 +458,8 @@ env_http_headers = { "X-Example-Env-Header" = "EXAMPLE_ENV_VAR" }
             stream_max_retries: None,
             stream_idle_timeout_ms: None,
             requires_openai_auth: false,
+            use_ratls: None,
+            ratls_policy: None,
         };
 
         let provider: ModelProviderInfo = toml::from_str(azure_provider_toml).unwrap();
@@ -442,6 +491,8 @@ env_http_headers = { "X-Example-Env-Header" = "EXAMPLE_ENV_VAR" }
                 stream_max_retries: None,
                 stream_idle_timeout_ms: None,
                 requires_openai_auth: false,
+                use_ratls: None,
+                ratls_policy: None,
             };
             let api = provider.to_api_provider(None).expect("api provider");
             assert!(
@@ -464,6 +515,8 @@ env_http_headers = { "X-Example-Env-Header" = "EXAMPLE_ENV_VAR" }
             stream_max_retries: None,
             stream_idle_timeout_ms: None,
             requires_openai_auth: false,
+            use_ratls: None,
+            ratls_policy: None,
         };
         let named_api = named_provider.to_api_provider(None).expect("api provider");
         assert!(named_api.is_azure_responses_endpoint());
@@ -488,6 +541,8 @@ env_http_headers = { "X-Example-Env-Header" = "EXAMPLE_ENV_VAR" }
                 stream_max_retries: None,
                 stream_idle_timeout_ms: None,
                 requires_openai_auth: false,
+                use_ratls: None,
+                ratls_policy: None,
             };
             let api = provider.to_api_provider(None).expect("api provider");
             assert!(

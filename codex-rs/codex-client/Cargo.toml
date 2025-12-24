@@ -4,6 +4,10 @@ license.workspace = true
 name = "codex-client"
 version.workspace = true
 
+[features]
+default = []
+ratls = ["dep:ratls-core", "dep:hyper", "dep:http-body-util", "dep:hyper-util"]
+
 [dependencies]
 async-trait = { workspace = true }
 bytes = { workspace = true }
@@ -19,6 +23,13 @@ thiserror = { workspace = true }
 tokio = { workspace = true, features = ["macros", "rt", "time", "sync"] }
 tracing = { workspace = true }
 tracing-opentelemetry = { workspace = true }
+url = { workspace = true }
+
+# Optional dependencies for ratls feature
+ratls-core = { workspace = true, optional = true }
+hyper = { version = "1.6", features = ["client", "http1"], optional = true }
+hyper-util = { version = "0.1", features = ["tokio", "client", "client-legacy"], optional = true }
+http-body-util = { version = "0.1", optional = true }
 
 [lints]
 workspace = true

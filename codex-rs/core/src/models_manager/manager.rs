@@ -1,6 +1,5 @@
 use chrono::Utc;
 use codex_api::ModelsClient;
-use codex_api::ReqwestTransport;
 use codex_app_server_protocol::AuthMode;
 use codex_protocol::openai_models::ModelInfo;
 use codex_protocol::openai_models::ModelPreset;
@@ -20,7 +19,7 @@ use crate::api_bridge::auth_provider_from_auth;
 use crate::api_bridge::map_api_error;
 use crate::auth::AuthManager;
 use crate::config::Config;
-use crate::default_client::build_reqwest_client;
+use crate::default_client::build_transport_for_provider;
 use crate::error::Result as CoreResult;
 use crate::features::Feature;
 use crate::model_provider_info::ModelProviderInfo;
@@ -90,7 +89,7 @@ impl ModelsManager {
         let auth = self.auth_manager.auth();
         let api_provider = self.provider.to_api_provider(Some(AuthMode::ChatGPT))?;
         let api_auth = auth_provider_from_auth(auth.clone(), &self.provider).await?;
-        let transport = ReqwestTransport::new(build_reqwest_client());
+        let transport = build_transport_for_provider(&self.provider);
         let client = ModelsClient::new(transport, api_provider, api_auth);
 
         let client_version = format_client_version_to_whole();
@@ -374,6 +373,8 @@ mod tests {
             stream_max_retries: Some(0),
             stream_idle_timeout_ms: Some(5_000),
             requires_openai_auth: false,
+            use_ratls: None,
+            ratls_policy: None,
         }
     }
 
